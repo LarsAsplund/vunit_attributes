@@ -25,7 +25,7 @@ begin
       elsif run("Test that b is one when not foo") then
         -- vunit: .req-2
         -- vunit: .req-1000
-        check_equal(b, 0);
+        check_equal(b, 1);
 
       elsif run("Test that c = d = 1") then
         -- vunit: .req-3
