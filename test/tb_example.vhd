@@ -8,7 +8,7 @@ end entity;
 architecture tb of tb_example is
 begin
   main : process
-    constant a, b, c, d : natural := 1;
+    constant a, b, c, d, e : natural := 1;
   begin
     test_runner_setup(runner, runner_cfg);
 
@@ -33,6 +33,10 @@ begin
         -- vunit: .bug-17
         check_equal(c, 1);
         check_equal(d, 1);
+
+      elsif run("Test that e is one") then
+        -- vunit: .req-5
+        check_equal(e, 1);
 
       end if;
     end loop;

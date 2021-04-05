@@ -1,8 +1,7 @@
 name: VUnit
 on: [push, pull_request]
 jobs:
-  Check_Requirements_Coverage:
-    name: Check Requirements Coverage
+  Tests:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
@@ -12,8 +11,11 @@ jobs:
     - uses: actions/setup-python@v2
       with:
         python-version: 3.9
-    - run: |
+    - name: Run VUnit Tests
+      run: |
         python -m pip install --progress-bar off vunit_hdl
         python run.py -x test_result.xml --exit-0
+    - name: Check Requirements Coverage
+      run: |
         python run.py --export-json project_info.json
         python analyze_requirement_coverage.py project_info.json test_result.xml requirements/requirements.csv

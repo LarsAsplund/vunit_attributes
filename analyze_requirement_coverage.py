@@ -5,6 +5,7 @@ from pathlib import Path
 from json import load
 from xml.etree import ElementTree
 import csv
+from vunit.color_printer import COLOR_PRINTER
 
 
 def analyze(project_info_path, test_result_path, requirements_path):
@@ -36,25 +37,28 @@ def analyze(project_info_path, test_result_path, requirements_path):
         requirements = {row[0] for row in csv.reader(csv_file)}
 
     not_tested_requirements = requirements - tested_requirements
-    if not_tested_requirements:
-        print("\nThe following requirements have not been tested:")
-        for req in not_tested_requirements:
-            print(f"  - {req}")
 
     requirements_failing_test = set()
     for test in all_test_cases - passed_test_cases:
         requirements_failing_test.update(test_to_requirement_mapping[test])
     requirements_failing_test &= requirements
 
-    if requirements_failing_test:
-        print("\nThe following requirements have failing tests:")
-        for req in requirements_failing_test:
-            print(f"  - {req}")
-
     ok = not not_tested_requirements and not requirements_failing_test
 
     if ok:
-        print("\nFull test coverage!")
+        COLOR_PRINTER.write("\nRequirements coverage check passed!", fg="gi")
+    else:
+        if not_tested_requirements:
+            COLOR_PRINTER.write("\nThe following requirements have not been tested:\n")
+            for req in not_tested_requirements:
+                COLOR_PRINTER.write(f"  - {req}\n")
+
+        if requirements_failing_test:
+            COLOR_PRINTER.write("\nThe following requirements have failing tests:\n")
+            for req in requirements_failing_test:
+                COLOR_PRINTER.write(f"  - {req}\n")
+
+        COLOR_PRINTER.write("\nRequirements coverage check failed!", fg="ri")
 
     return ok
 
