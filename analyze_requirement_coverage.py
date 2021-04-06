@@ -3,12 +3,12 @@
 import argparse
 from pathlib import Path
 from json import load
-from xml.etree import ElementTree
+from junitparser import JUnitXml
 import csv
 from vunit.color_printer import COLOR_PRINTER
 
 
-def analyze(project_info_path, test_result_path, requirements_path):
+def get_project_info(project_info_path):
     test_to_requirement_mapping = dict()
     tested_requirements = set()
     with open(project_info_path) as json_file:
@@ -21,25 +21,34 @@ def analyze(project_info_path, test_result_path, requirements_path):
             tested_requirements.update(requirements)
             test_to_requirement_mapping[test["name"]] = requirements
 
-    with open(test_result_path) as xml_file:
-        tree = ElementTree.parse(xml_file)
-        test_result = tree.getroot()
+    return test_to_requirement_mapping, tested_requirements
 
-        all_test_cases = set()
-        passed_test_cases = set()
-        for test in test_result.iter("testcase"):
-            name = test.attrib["classname"] + "." + test.attrib["name"]
-            all_test_cases.add(name)
-            if test.find("skipped") is None and test.find("failure") is None:
-                passed_test_cases.add(name)
 
+def get_failed_test_cases(test_result_path):
+    return (
+        test_case.classname + "." + test_case.name
+        for test_case in JUnitXml.fromfile(test_result_path)
+        if test_case.result  # Absence of result indicates passed test case
+    )
+
+
+def get_requirements(requirements_path):
     with open(requirements_path, newline="") as csv_file:
         requirements = {row[0] for row in csv.reader(csv_file)}
 
+    return requirements
+
+
+def analyze(project_info_path, test_result_path, requirements_path):
+    test_to_requirement_mapping, tested_requirements = get_project_info(
+        project_info_path
+    )
+
+    requirements = get_requirements(requirements_path)
     not_tested_requirements = requirements - tested_requirements
 
     requirements_failing_test = set()
-    for test in all_test_cases - passed_test_cases:
+    for test in get_failed_test_cases(test_result_path):
         requirements_failing_test.update(test_to_requirement_mapping[test])
     requirements_failing_test &= requirements
 
